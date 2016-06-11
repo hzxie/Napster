@@ -62,9 +62,14 @@ public class SessionGateway extends Thread {
 					if ( command.startsWith("ADD ") ) {
 						SharedFile sharedFile = JSON.parseObject(command.substring(4), SharedFile.class);
 						String ipAddress = socket.getInetAddress().toString();
-						fileServer.shareNewFile(sharedFile, ipAddress);
+						boolean isFileShared = fileServer.shareNewFile(sharedFile, ipAddress);
 
-						LOGGER.info("File shared at " + ipAddress + ", " + sharedFile);
+						if ( isFileShared ) {
+							out.println("OK");
+							LOGGER.info("File shared at " + ipAddress + ", " + sharedFile);
+						} else {
+							out.println("ERROR");
+						}
 					} else if ( command.startsWith("DELETE ") ) {
 
 					} else if ( command.equals("LIST") ) {

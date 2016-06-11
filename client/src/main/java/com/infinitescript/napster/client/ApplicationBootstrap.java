@@ -157,6 +157,8 @@ public class ApplicationBootstrap extends Application {
 
 				try {
 					client.connect(ipAddress, nickName);
+					fileTableView.setItems(getSharedFiles());
+
 					isConnected = true;
 				} catch (Exception ex) {
 					LOGGER.catching(ex);
@@ -187,11 +189,9 @@ public class ApplicationBootstrap extends Application {
 					long size = file.length();
 					
 					SharedFile sharedFile = new SharedFile(fileName, sharer, checksum, size);
-					LOGGER.debug("Before Send to Server");
-					boolean isShared = client.shareNewFile(sharedFile);
-					LOGGER.debug("After Send to Server");
-					
-					if ( !isShared ) {
+					boolean isFileShared = client.shareNewFile(sharedFile);
+
+					if ( isFileShared ) {
 						fileServer.shareNewFile(checksum, filePath);
 						fileTableView.setItems(getSharedFiles());
 						
