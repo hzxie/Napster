@@ -22,40 +22,41 @@ public class SessionGateway extends Thread {
 	public void run() {
 		try {
 			// Decorate the streams so we can send characters
-            // and not just bytes.  Ensure output is flushed
-            // after every newline.
+			// and not just bytes.  Ensure output is flushed
+			// after every newline.
 			BufferedReader in = new BufferedReader(
-	                new InputStreamReader(socket.getInputStream()));
+					new InputStreamReader(socket.getInputStream()));
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 			
 			// Get messages from the client, line by line; return them
-            // capitalized
-            while ( true ) {
-            	String command = in.readLine();
-            	
-            	// Check if the user has logged in
-            	if ( !users.containsKey(socket) ) {
-            		if ( command.length() <= 7 ||
-            				!command.substring(0, 7).equals("CONNECT") ) {
-            			out.println("[WARN] Socket is going to close.");
-            			closeSocket();
-            		} else {
-            			String username = command.substring(7);
-            			
-            			out.println("ACCEPT");
-            			users.put(socket, username.trim());
-            			LOGGER.info("New user joined " + username + ", Current Online Users: " + users.size());
-            		}
-            	} else {
-            		if ( command.equals("QUIT") ) {
-            			// The user is willing to leave
-            			users.remove(socket);
-            			closeSocket();
-            		} else {
-            			// Invoke SessionHandler for other request
-            		}
-            	}
-            }
+			// capitalized
+			while ( true ) {
+				String command = in.readLine();
+				
+				// Check if the user has logged in
+				LOGGER.debug("Received new message: " + command);
+				if ( !users.containsKey(socket) ) {
+					if ( command.length() <= 7 ||
+							!command.substring(0, 7).equals("CONNECT") ) {
+						out.println("[WARN] Socket is going to close.");
+						closeSocket();
+					} else {
+						String username = command.substring(7);
+						
+						out.println("ACCEPT");
+						users.put(socket, username.trim());
+						LOGGER.info("New user joined " + username + ", Current Online Users: " + users.size());
+					}
+				} else {
+					if ( command.equals("QUIT") ) {
+						// The user is willing to leave
+						users.remove(socket);
+						closeSocket();
+					} else {
+						// Invoke SessionHandler for other request
+					}
+				}
+			}
 		} catch (IOException e) {
 			LOGGER.catching(e);
 		} finally {
