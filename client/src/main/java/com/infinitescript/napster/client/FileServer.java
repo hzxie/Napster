@@ -27,6 +27,7 @@ public class FileServer {
 	 */
 	public void accept() throws IOException {
 		ServerSocket commandlistener = new ServerSocket(COMMAND_PORT);
+		ServerSocket fileStreamlistener = new ServerSocket(FILE_STREAM_PORT);
 		try {
 			
 		} finally {
@@ -42,6 +43,14 @@ public class FileServer {
 	 */
 	public void shareNewFile(String checksum, String filePath) {
 		sharedFiles.put(checksum, filePath);
+	}
+
+	/**
+	 * Remove a shared file from the file server because it is no longer shared.
+	 * @param checksum the checksum of the file
+	 */
+	public void unshareFile(String checksum) {
+		sharedFiles.remove(checksum);
 	}
 	
 	/**
@@ -60,7 +69,7 @@ public class FileServer {
 	/**
 	 * The port used for receiving file stream.
 	 */
-	private static final int FILE_PORT = 7702;
+	private static final int FILE_STREAM_PORT = 7702;
 	
 	/**
 	 * The unique instance of Napster client.

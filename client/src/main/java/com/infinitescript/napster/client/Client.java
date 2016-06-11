@@ -6,8 +6,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,25 +47,99 @@ public class Client {
 			throw new Exception("Server closed socket for unknown reason.");
 		}
 	}
-	
+
+	/**
+	 * Get the list of shared files right now from Napster server.
+	 * @return the list of shared files
+	 */
 	public List<SharedFile> getSharedFiles() {
-		return null;
+		// Send LIST command to server for querying shared files
+		outputStreamWriter.println("LIST");
+
+		// Receive response from server
+		List<SharedFile> sharedFiles = new ArrayList<>();
+		try {
+			String response = inputStreamReader.readLine();
+
+			if ( !response.equals("ERROR") ) {
+				sharedFiles = JSON.parseArray(response, SharedFile.class);
+			}
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
+		return sharedFiles;
 	}
-	
+
+	/**
+	 * Share a new file to Napster server.
+	 * @param sharedFile the file to share
+	 * @return whether the share operation is successful
+	 */
 	public boolean shareNewFile(SharedFile sharedFile) {
+		// Send share command to server
+		outputStreamWriter.println("ADD " + JSON.toJSON(sharedFile));
+
+		// Receive response from server
+		try {
+			String response = inputStreamReader.readLine();
+
+			if ( response.equals("OK") ) {
+				return true;
+			}
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
 		return false;
 	}
-	
+
+	/**
+	 * Unshare a file from Napster server.
+	 * @param fileName the file name of the file
+	 * @param checksum the checksum of the file
+	 * @return whether the unshare operation is successful
+	 */
 	public boolean unshareFile(String fileName, String checksum) {
+		// Send unshare command to server
+		outputStreamWriter.println("DELETE " + JSON.toJSON(((Supplier<Map<String, String>>)(() -> {
+			Map<String, String> map = new HashMap();
+			map.put("fileName", fileName);
+			map.put("checksum", checksum);
+			return Collections.unmodifiableMap(map);
+		})).get()));
+
+		// Receive response from server
+		try {
+			String response = inputStreamReader.readLine();
+
+			if ( response.equals("OK") ) {
+				return true;
+			}
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
 		return false;
 	}
-	
+
+	/**
+	 * Get the IP of the sharer who share a specific file
+	 * @param checksum the checksum of the file
+	 * @return the IP of the sharer or N/a if the file is not available
+	 */
 	public String getFileSharerIp(String checksum) {
-		return null;
-	}
-	
-	public boolean receiveFile(String targetFilePath) {
-		return false;
+		// Send share command to server
+		outputStreamWriter.println("REQUEST " + checksum);
+
+		// Receive response from server
+		try {
+			String response = inputStreamReader.readLine();
+
+			if ( !response.equals("ERROR") ) {
+				return response;
+			}
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
+		return "N/a";
 	}
 	
 	/**

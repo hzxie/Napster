@@ -215,6 +215,7 @@ public class ApplicationBootstrap extends Application {
 			String checksum = selectedFile.getChecksum();
 			
 			if ( client.unshareFile(fileName, checksum) ) {
+				fileServer.unshareFile(checksum);
 				fileTableView.setItems(getSharedFiles());
 
 				LOGGER.info("File unshared: " + selectedFile);
