@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,8 +20,8 @@ public class Client {
 	
 	/**
 	 * Connect to server.
-	 * @param ipAddress - the IP address of the server.
-	 * @param nickName - the nick name of the user
+	 * @param ipAddress the IP address of the server.
+	 * @param nickName  the nick name of the user
 	 * @throws Exception 
 	 */
 	public void connect(String ipAddress, String nickName) 
@@ -45,6 +46,29 @@ public class Client {
 		}
 	}
 	
+	public List<SharedFile> getSharedFiles() {
+		return null;
+	}
+	
+	public boolean shareNewFile(SharedFile sharedFile) {
+		return false;
+	}
+	
+	public boolean unshareFile(String fileName, String checksum) {
+		return false;
+	}
+	
+	public String getFileSharerIp(String checksum) {
+		return null;
+	}
+	
+	public boolean receiveFile(String targetFilePath) {
+		return false;
+	}
+	
+	/**
+	 * Close socket for client.
+	 */
 	public void disconnect() {
 		// Say goodbye to Napster server
 		outputStreamWriter.println("QUIT");
