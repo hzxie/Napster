@@ -35,7 +35,13 @@ public class SessionGateway extends Thread {
 				
 				// Check if the user has logged in
 				LOGGER.debug("Received new message: " + command);
-				if ( !users.containsKey(socket) ) {
+				
+				if ( command == null || command.equals("QUIT") ) {
+					// The user is willing to leave
+					users.remove(socket);
+					// Fix infinite loop after client exit
+					break;
+				} else if ( !users.containsKey(socket) ) {
 					if ( command.length() <= 7 ||
 							!command.substring(0, 7).equals("CONNECT") ) {
 						out.println("[WARN] Socket is going to close.");
@@ -48,13 +54,7 @@ public class SessionGateway extends Thread {
 						LOGGER.info("New user joined " + username + ", Current Online Users: " + users.size());
 					}
 				} else {
-					if ( command.equals("QUIT") ) {
-						// The user is willing to leave
-						users.remove(socket);
-						closeSocket();
-					} else {
-						// Invoke SessionHandler for other request
-					}
+					// Invoke SessionHandler for other request
 				}
 			}
 		} catch (IOException e) {
@@ -83,7 +83,7 @@ public class SessionGateway extends Thread {
 	private Socket socket;
 	
 	/**
-	 * The map used for storing online users.
+	 * The map used for storing the nick name for online users.
 	 */
 	private static Map<Socket, String> users = new Hashtable<Socket, String>();
 	

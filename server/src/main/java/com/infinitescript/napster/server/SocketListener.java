@@ -23,16 +23,21 @@ public class SocketListener {
 	 * @throws IOException
 	 */
 	public void accept() throws IOException {
-		ServerSocket listener = new ServerSocket(7777);
+		ServerSocket listener = new ServerSocket(PORT);
 		try {
 			// Listen to incoming sockets
 			while ( true ) {
 				new SessionGateway(listener.accept()).start();
-            }
+			}
 		} finally {
 			listener.close();
 		}
 	}
+
+	/**
+	 * The port used for receiving commands from clients.
+	 */
+	private static final int PORT = 7777;
 	
 	/**
 	 * The unique server instance.
