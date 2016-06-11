@@ -3,6 +3,11 @@ package com.infinitescript.napster.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+/**
+ * The socket listener for server.
+ * 
+ * @author Haozhe Xie
+ */
 public class SocketListener {
 	/**
 	 * The private constructor for singleton pattern.

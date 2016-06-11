@@ -2,8 +2,8 @@
 <!DOCTYPE xml>
 <Configuration status="WARN">
 	<Properties>
-		<Property name="fileName">logs/napster-server.log</Property>
-		<Property name="filePattern">logs/napster-server-%d{yyyy-MM-dd}.log</Property>
+		<Property name="fileName">logs/napster-client.log</Property>
+		<Property name="filePattern">logs/napster-client-%d{yyyy-MM-dd}.log</Property>
 		<Property name="patternLayout">[%p] %d [%t] %c - %m%n</Property>
 	</Properties>
 	<Appenders>
