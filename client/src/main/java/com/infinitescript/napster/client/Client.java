@@ -85,6 +85,7 @@ public class Client {
 		// Receive response from server
 		try {
 			String response = inputStreamReader.readLine();
+			LOGGER.debug("[ShareFile] Received message from server: " + response);
 
 			if ( response.equals("OK") ) {
 				return true;

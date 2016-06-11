@@ -187,7 +187,9 @@ public class ApplicationBootstrap extends Application {
 					long size = file.length();
 					
 					SharedFile sharedFile = new SharedFile(fileName, sharer, checksum, size);
+					LOGGER.debug("Before Send to Server");
 					boolean isShared = client.shareNewFile(sharedFile);
+					LOGGER.debug("After Send to Server");
 					
 					if ( !isShared ) {
 						fileServer.shareNewFile(checksum, filePath);
@@ -210,7 +212,7 @@ public class ApplicationBootstrap extends Application {
 		});
 		unshareFileButton.setOnAction((ActionEvent e) -> {
 			SharedFile selectedFile = fileTableView.getSelectionModel().getSelectedItem();
-			
+
 			String fileName = selectedFile.getFileName();
 			String checksum = selectedFile.getChecksum();
 			

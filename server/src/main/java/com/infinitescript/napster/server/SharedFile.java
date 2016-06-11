@@ -1,4 +1,4 @@
-package com.infinitescript.napster.client;
+package com.infinitescript.napster.server;
 
 import java.io.Serializable;
 

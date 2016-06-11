@@ -6,14 +6,17 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class SessionGateway extends Thread {
 	public SessionGateway(Socket socket) {
 		this.socket = socket;
+		this.fileServer = FileServer.getInstance();
 	}
 	
 	/* (non-Javadoc)
@@ -38,23 +41,38 @@ public class SessionGateway extends Thread {
 				
 				if ( command == null || command.equals("QUIT") ) {
 					// The user is willing to leave
+					String nickName = users.get(socket);
+					LOGGER.info("User leaved " + nickName + ", Current Online Users: " + (users.size() - 1));
 					users.remove(socket);
 					// Fix infinite loop after client exit
 					break;
 				} else if ( !users.containsKey(socket) ) {
-					if ( command.length() <= 7 ||
-							!command.substring(0, 7).equals("CONNECT") ) {
+					if ( !command.startsWith("CONNECT ") ) {
 						out.println("[WARN] Socket is going to close.");
 						closeSocket();
 					} else {
-						String username = command.substring(7);
+						String nickName = command.substring(7);
 						
 						out.println("ACCEPT");
-						users.put(socket, username.trim());
-						LOGGER.info("New user joined " + username + ", Current Online Users: " + users.size());
+						users.put(socket, nickName.trim());
+						LOGGER.info("New user joined " + nickName + ", Current Online Users: " + users.size());
 					}
 				} else {
-					// Invoke SessionHandler for other request
+					// Invoke FileServer for other request
+					if ( command.startsWith("ADD ") ) {
+						SharedFile sharedFile = JSON.parseObject(command.substring(4), SharedFile.class);
+						String ipAddress = socket.getInetAddress().toString();
+						fileServer.shareNewFile(sharedFile, ipAddress);
+
+						LOGGER.info("File shared at " + ipAddress + ", " + sharedFile);
+					} else if ( command.startsWith("DELETE ") ) {
+
+					} else if ( command.equals("LIST") ) {
+						List<SharedFile> sharedFiles = fileServer.getSharedFiles();
+						out.println(JSON.toJSONString(sharedFiles));
+					} else if ( command.startsWith("REQUEST ") ) {
+
+					}
 				}
 			}
 		} catch (IOException e) {
@@ -63,7 +81,10 @@ public class SessionGateway extends Thread {
 			closeSocket();
 		}
 	}
-	
+
+	/**
+	 * Close socket.
+	 */
 	private void closeSocket() {
 		if ( socket == null ) {
 			return;
@@ -81,6 +102,11 @@ public class SessionGateway extends Thread {
 	 * The socket between the server and client.
 	 */
 	private Socket socket;
+
+	/**
+	 * The file server for sharing files.
+	 */
+	private FileServer fileServer;
 	
 	/**
 	 * The map used for storing the nick name for online users.
