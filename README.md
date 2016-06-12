@@ -1,5 +1,7 @@
 # Napster
 
+[![Build Status](https://travis-ci.com/zjhzxhz/Napster.svg?token=ngQSu6kYWuG5K9shK4PF)](https://travis-ci.com/zjhzxhz/Napster)
+
 ## Introduction
 
 A simple file sharing computer program base on Java.
