@@ -36,10 +36,9 @@ public class SessionGateway extends Thread {
 			// capitalized
 			while ( true ) {
 				String command = in.readLine();
-				
-				// Check if the user has logged in
 				LOGGER.debug("Received new message: " + command);
 				
+				// Check if the user has logged in
 				if ( command == null || command.equals("QUIT") ) {
 					// The user is willing to leave
 					String nickName = users.get(socket);
@@ -71,7 +70,6 @@ public class SessionGateway extends Thread {
 
 						if ( isFileShared ) {
 							out.println("OK");
-							LOGGER.info("File shared at " + socket + ", " + sharedFile);
 						} else {
 							out.println("ERROR");
 						}
@@ -82,7 +80,6 @@ public class SessionGateway extends Thread {
 
 						if ( isFileUnshared ) {
 							out.println("OK");
-							LOGGER.info("File unshared at " + socket + ", " + sharedFile);
 						} else {
 							out.println("ERROR");
 						}
@@ -90,7 +87,9 @@ public class SessionGateway extends Thread {
 						List<SharedFile> sharedFiles = fileServer.getSharedFiles();
 						out.println(JSON.toJSONString(sharedFiles));
 					} else if ( command.startsWith("REQUEST ") ) {
-
+						String checksum = command.substring(8);
+						String sharerIp = fileServer.getFileSharerIp(checksum);
+						out.println(sharerIp);
 					}
 				}
 			}

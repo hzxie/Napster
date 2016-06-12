@@ -1,6 +1,6 @@
 package com.infinitescript.napster.client;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Hashtable;
@@ -26,12 +26,88 @@ public class FileServer {
 	 * @throws IOException
 	 */
 	public void accept() throws IOException {
-		ServerSocket commandlistener = new ServerSocket(COMMAND_PORT);
-		ServerSocket fileStreamlistener = new ServerSocket(FILE_STREAM_PORT);
+		ServerSocket commandListener = new ServerSocket(COMMAND_PORT);
+		Runnable commandListenerTask = () -> {
+			while ( true ) {
+				try {
+					Socket commandSocket = commandListener.accept();
+					BufferedReader commandInputStream = new BufferedReader(
+							new InputStreamReader(commandSocket.getInputStream()));
+					PrintWriter commandOutputStream = new PrintWriter(commandSocket.getOutputStream(), true);
+
+					String command = commandInputStream.readLine();
+					LOGGER.debug("Received new message: " + command);
+
+					boolean isFileAvailable = false;
+					if ( command.startsWith("GET ") ) {
+						String checksum = command.substring(4);
+						String ipAddress = commandSocket.getInetAddress().toString();
+
+						if ( sharedFiles.containsKey(checksum) ) {
+							isFileAvailable = true;
+							commandOutputStream.println("ACCEPT");
+							sendFileStream(checksum, ipAddress);
+						}
+					}
+					if ( !isFileAvailable ) {
+						commandOutputStream.println("ERROR");
+					}
+				} catch ( IOException ex ) {
+					LOGGER.catching(ex);
+				} finally {
+					closeSocket(commandListener);
+				}
+			}
+		};
+		new Thread(commandListenerTask).start();
+	}
+
+	/**
+	 * Send file stream to the receiver.
+	 * @param checksum  the checksum of the file
+	 * @param ipAddress the IP address of the receiver
+	 */
+	private void sendFileStream(String checksum, String ipAddress) {
+		Socket socket = null;
+		DataInputStream fileInputStream = null;
+		DataOutputStream fileOutputStream = null;
+		String filePath = sharedFiles.get(checksum);
+
 		try {
-			
+			socket = new Socket(ipAddress, FILE_STREAM_PORT);
+			fileInputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(filePath)));
+			fileOutputStream = new DataOutputStream(socket.getOutputStream());
+
+			byte[] fileBuffer = new byte[BUFFER_SIZE];
+			while ( true ) {
+				if ( fileInputStream == null ) {
+					return;
+				}
+				int bytesRead = fileInputStream.read(fileBuffer);
+
+				if ( bytesRead == -1 ) {
+					break;
+				}
+				fileOutputStream.write(fileBuffer, 0, bytesRead);
+			}
+			fileOutputStream.flush();
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
 		} finally {
-			commandlistener.close();
+			// Close Socket and DataStream
+			try {
+				if ( socket != null ) {
+					socket.close();
+				}
+				if ( fileInputStream != null ) {
+					fileInputStream.close();
+				}
+				if ( fileOutputStream != null ) {
+					fileOutputStream.close();
+				}
+			} catch ( IOException ex ) {
+				LOGGER.catching(ex);
+			}
 		}
 	}
 	
@@ -52,6 +128,27 @@ public class FileServer {
 	public void unshareFile(String checksum) {
 		sharedFiles.remove(checksum);
 	}
+
+	/**
+	 * Check if the shared file requested is available.
+	 * @param checksum - the checksum of the file
+	 * @return whether the shared file is available
+	 */
+	public boolean contains(String checksum) {
+		return sharedFiles.containsKey(checksum);
+	}
+
+	/**
+	 * Close socket for the server.
+	 * @param socket the server socket to close
+	 */
+	private void closeSocket(ServerSocket socket) {
+		try {
+			socket.close();
+		} catch ( IOException ex ) {
+			LOGGER.catching(ex);
+		}
+	}
 	
 	/**
 	 * The map is used for storing shared files.
@@ -65,11 +162,16 @@ public class FileServer {
 	 * The port used for receiving commands.
 	 */
 	private static final int COMMAND_PORT = 7701;
-	
+
 	/**
 	 * The port used for receiving file stream.
 	 */
 	private static final int FILE_STREAM_PORT = 7702;
+
+	/**
+	 * The buffer size of the file stream.
+	 */
+	private static final int BUFFER_SIZE = 1048576;
 	
 	/**
 	 * The unique instance of Napster client.

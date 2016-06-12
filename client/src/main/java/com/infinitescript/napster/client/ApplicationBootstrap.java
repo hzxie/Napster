@@ -58,7 +58,7 @@ public class ApplicationBootstrap extends Application {
 	}
 
 	/**
-	 * 
+	 * Setup controls in the UI.
 	 * @param primaryStage
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -240,11 +240,17 @@ public class ApplicationBootstrap extends Application {
 			File file = fileChooser.showSaveDialog(primaryStage);
 			if ( file != null ) {
 				String checksum = selectedFile.getChecksum();
-				String ipAddress = client.getFileSharerIp(checksum);
-				
+
+
 				try {
+					if ( fileServer.contains(checksum) ) {
+						throw new Exception("The file is shared by yourself.");
+					}
+
+					String ipAddress = client.getFileSharerIp(checksum);
 					if ( !ipAddress.equals("N/a") ) {
-						// TODO: Request the file from the sharer
+						LOGGER.debug("The IP of sharer: " + ipAddress);
+
 					} else {
 						throw new Exception("The file is no longer shared.");
 					}
@@ -259,19 +265,13 @@ public class ApplicationBootstrap extends Application {
 				}
 			}
 		});
-		fileTableView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
-			/* (non-Javadoc)
-			 * @see javafx.beans.value.ChangeListener#changed(javafx.beans.value.ObservableValue, java.lang.Object, java.lang.Object)
-			 */
-			@Override
-			public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-				if ( fileTableView.getSelectionModel().getSelectedItem() != null )  {
-					unshareFileButton.setDisable(false);
-					receiveFileButton.setDisable(false);
-				} else {
-					unshareFileButton.setDisable(true);
-					receiveFileButton.setDisable(true);
-				}
+		fileTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			if ( fileTableView.getSelectionModel().getSelectedItem() != null )  {
+				unshareFileButton.setDisable(false);
+				receiveFileButton.setDisable(false);
+			} else {
+				unshareFileButton.setDisable(true);
+				receiveFileButton.setDisable(true);
 			}
 		});
 

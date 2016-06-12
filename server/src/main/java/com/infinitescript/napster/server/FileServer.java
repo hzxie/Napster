@@ -52,6 +52,7 @@ public class FileServer {
 		meta.put("sharedFile", sharedFile);
 		sharedFiles.put(checksum, meta);
 
+		LOGGER.info("File shared at " + socket + ", " + sharedFile);
 		return true;
 	}
 
@@ -67,12 +68,14 @@ public class FileServer {
 		}
 
 		Map<String, Object> sharedFileMeta = sharedFiles.get(checksum);
+		SharedFile sharedFile = (SharedFile) sharedFileMeta.get("sharedFile");
 		Socket s = (Socket) sharedFileMeta.get("socket");
 
 		if ( !socket.equals(s) ) {
 			return false;
 		}
 		sharedFiles.remove(checksum);
+		LOGGER.info("File unshared at " + socket + ", " + sharedFile);
 		return true;
 	}
 
@@ -90,12 +93,28 @@ public class FileServer {
 		while ( itr.hasNext() ) {
 			Map.Entry<String, Map<String, Object>> e = itr.next();
 			Socket s = (Socket) e.getValue().get("socket");
+			SharedFile sharedFile = (SharedFile) e.getValue().get("sharedFile");
 
 			if ( socket.equals(s) ) {
 				itr.remove();
+				LOGGER.info("File unshared at " + socket + ", " + sharedFile);
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Get the IP of the sharer who share a specific file
+	 * @param checksum the checksum of the file
+	 * @return the IP of the sharer or ERROR if the file is not available
+	 */
+	public String getFileSharerIp(String checksum) {
+		if ( !sharedFiles.containsKey(checksum) ) {
+			return "ERROR";
+		}
+
+		String ipAddress = (String) sharedFiles.get(checksum).get("ipAddress");
+		return ipAddress;
 	}
 
 	/**
