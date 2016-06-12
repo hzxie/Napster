@@ -36,10 +36,6 @@ public class FileReceiver {
 		DataOutputStream fileOutputStream = null;
 
 		try {
-			// Opening port for receiving file stream
-			fileStreamListener = new ServerSocket(FILE_STREAM_PORT);
-			fileStreamSocket = fileStreamListener.accept();
-
 			// Send command for requesting files
 			commandSocket = new Socket(ipAddress, COMMAND_PORT);
 			commandInputStream = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
@@ -49,6 +45,10 @@ public class FileReceiver {
 			if ( !commandInputStream.equals("ACCEPT") ) {
 				throw new Exception("The sharer refused to send this file.");
 			}
+
+			// Opening port for receiving file stream
+			fileStreamListener = new ServerSocket(FILE_STREAM_PORT);
+			fileStreamSocket = fileStreamListener.accept();
 
 			// Receiving Data Stream
 			fileInputStream = new DataInputStream(new BufferedInputStream(fileStreamSocket.getInputStream()));

@@ -41,7 +41,7 @@ public class FileServer {
 					boolean isFileAvailable = false;
 					if ( command.startsWith("GET ") ) {
 						String checksum = command.substring(4);
-						String ipAddress = commandSocket.getInetAddress().toString();
+						String ipAddress = commandSocket.getInetAddress().toString().substring(1);
 
 						if ( sharedFiles.containsKey(checksum) ) {
 							isFileAvailable = true;
