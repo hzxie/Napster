@@ -1,8 +1,7 @@
 package com.infinitescript.napster.client;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -11,52 +10,63 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * File server for sending shared files to others.
- * 
+ *
  * @author Haozhe Xie
  */
 public class FileServer {
 	private FileServer() { }
-	
+
 	public static FileServer getInstance() {
 		return INSTANCE;
 	}
-	
+
 	/**
 	 * Receive the message from client.
 	 * @throws IOException
 	 */
 	public void accept() throws IOException {
-		commandListener = new ServerSocket(COMMAND_PORT);
 		Runnable commandListenerTask = () -> {
-			while ( true ) {
-				try {
-					Socket commandSocket = commandListener.accept();
-					BufferedReader commandInputStream = new BufferedReader(
-							new InputStreamReader(commandSocket.getInputStream()));
-					PrintWriter commandOutputStream = new PrintWriter(commandSocket.getOutputStream(), true);
+			DatagramSocket commandSocket = null;
+			try {
+				commandSocket = new DatagramSocket(COMMAND_PORT);
+				byte[] inputDataBuffer = new byte[BUFFER_SIZE];
+				byte[] outputDataBuffer = new byte[BUFFER_SIZE];
 
-					String command = commandInputStream.readLine();
+				while ( true ) {
+					DatagramPacket inputPacket = new DatagramPacket(inputDataBuffer, inputDataBuffer.length);
+					commandSocket.receive(inputPacket);
+					String command = new String(inputPacket.getData());
 					LOGGER.debug("Received new message: " + command);
 
-					boolean isFileAvailable = false;
+					outputDataBuffer = "ERROR".getBytes();
 					if ( command.startsWith("GET ") ) {
 						String checksum = command.substring(4);
-						String ipAddress = commandSocket.getInetAddress().toString().substring(1);
+						InetAddress ipAddress = inputPacket.getAddress();
+						int port = inputPacket.getPort();
 
+						LOGGER.debug(checksum);
+						LOGGER.debug(sharedFiles.containsKey(checksum));
 						if ( sharedFiles.containsKey(checksum) ) {
-							isFileAvailable = true;
-							commandOutputStream.println("ACCEPT");
-							sendFileStream(checksum, ipAddress);
+							outputDataBuffer = "ACCEPT".getBytes();
+
+							try {
+								Thread.sleep(1000);
+							} catch ( InterruptedException e ) {
+								e.printStackTrace();
+							}
+							String ipAddressString = ipAddress.toString().substring(1);
+							sendFileStream(checksum, ipAddressString);
 						}
+
+						DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer, outputDataBuffer.length, ipAddress, port);
+						commandSocket.send(outputPacket);
 					}
-					if ( !isFileAvailable ) {
-						commandOutputStream.println("ERROR");
-					}
-				} catch ( IOException ex ) {
-					LOGGER.catching(ex);
-				} finally {
-					// closeSocket(commandListener);
-					break;
+				}
+			} catch ( IOException ex ) {
+				LOGGER.catching(ex);
+			} finally {
+				if ( commandSocket != null ) {
+					commandSocket.close();
 				}
 			}
 		};
@@ -76,10 +86,10 @@ public class FileServer {
 	 * @param ipAddress the IP address of the receiver
 	 */
 	private void sendFileStream(String checksum, String ipAddress) {
+		String filePath = sharedFiles.get(checksum);
 		Socket socket = null;
 		DataInputStream fileInputStream = null;
 		DataOutputStream fileOutputStream = null;
-		String filePath = sharedFiles.get(checksum);
 
 		try {
 			socket = new Socket(ipAddress, FILE_STREAM_PORT);
@@ -118,10 +128,10 @@ public class FileServer {
 			}
 		}
 	}
-	
+
 	/**
 	 * Register new file to the file server for sharing.
-	 * 
+	 *
 	 * @param checksum the checksum of the file
 	 * @param filePath the absolute path of the file
 	 */
@@ -152,17 +162,19 @@ public class FileServer {
 	 */
 	private void closeSocket(ServerSocket socket) {
 		try {
-			socket.close();
+			if ( socket != null ) {
+				socket.close();
+			}
 		} catch ( IOException ex ) {
 			LOGGER.catching(ex);
 		}
 	}
-	
+
 	/**
 	 * The map is used for storing shared files.
-	 * 
+	 *
 	 * The key stands for the checksum of the file.
-	 * The value stands for the absolute path of the file. 
+	 * The value stands for the absolute path of the file.
 	 */
 	private static Map<String, String> sharedFiles = new Hashtable<>();
 
@@ -185,7 +197,7 @@ public class FileServer {
 	 * The buffer size of the file stream.
 	 */
 	private static final int BUFFER_SIZE = 1048576;
-	
+
 	/**
 	 * The unique instance of Napster client.
 	 */

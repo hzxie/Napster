@@ -4,8 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 /**
  * File Receiver used for receiving file stream.
@@ -27,9 +26,7 @@ public class FileReceiver {
 	 * @throws Exception
 	 */
 	public void receiveFile(String checksum, String filePath, String ipAddress) throws Exception {
-		Socket commandSocket = null;
-		BufferedReader commandInputStream = null;
-		PrintWriter commandOutputStream = null;
+		DatagramSocket commandSocket = null;
 		ServerSocket fileStreamListener = null;
 		Socket fileStreamSocket = null;
 		DataInputStream fileInputStream = null;
@@ -37,12 +34,20 @@ public class FileReceiver {
 
 		try {
 			// Send command for requesting files
-			commandSocket = new Socket(ipAddress, COMMAND_PORT);
-			commandInputStream = new BufferedReader(new InputStreamReader(commandSocket.getInputStream()));
-			commandOutputStream = new PrintWriter(commandSocket.getOutputStream(), true);
+			commandSocket = new DatagramSocket();
+			byte[] inputDataBuffer = new byte[BUFFER_SIZE];
+			byte[] outputDataBuffer = new byte[BUFFER_SIZE];
 
-			commandOutputStream.println("GET " + checksum);
-			String command = commandInputStream.readLine();
+			outputDataBuffer = ("GET " + checksum).getBytes();
+			DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer,
+					outputDataBuffer.length, InetAddress.getByName(ipAddress), COMMAND_PORT);
+			commandSocket.send(outputPacket);
+
+			DatagramPacket inputPacket = new DatagramPacket(inputDataBuffer, inputDataBuffer.length);
+			commandSocket.receive(inputPacket);
+			String command = new String(inputPacket.getData());
+
+			LOGGER.debug("Receive command from peer: " + command);
 			if ( !command.equals("ACCEPT") ) {
 				throw new Exception("The sharer refused to send this file.");
 			}
@@ -69,12 +74,6 @@ public class FileReceiver {
 			fileOutputStream.flush();
 		} finally {
 			try {
-				if ( commandInputStream != null ) {
-					commandInputStream.close();
-				}
-				if ( commandOutputStream != null ) {
-					commandOutputStream.close();
-				}
 				if ( commandSocket != null ) {
 					commandSocket.close();
 				}

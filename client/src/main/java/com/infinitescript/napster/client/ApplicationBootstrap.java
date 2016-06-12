@@ -240,7 +240,8 @@ public class ApplicationBootstrap extends Application {
 			receiveFileButton.setText("Please wait ...");
 			receiveFileButton.setDisable(true);
 			SharedFile selectedFile = fileTableView.getSelectionModel().getSelectedItem();
-			
+
+			fileChooser.setInitialFileName(selectedFile.getFileName());
 			File file = fileChooser.showSaveDialog(primaryStage);
 			if ( file != null ) {
 				String checksum = selectedFile.getChecksum();
