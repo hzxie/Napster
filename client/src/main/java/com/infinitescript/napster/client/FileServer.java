@@ -55,7 +55,8 @@ public class FileServer {
 				} catch ( IOException ex ) {
 					LOGGER.catching(ex);
 				} finally {
-					closeSocket(commandListener);
+					// closeSocket(commandListener);
+					break;
 				}
 			}
 		};

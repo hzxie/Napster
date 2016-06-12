@@ -171,6 +171,7 @@ public class ApplicationBootstrap extends Application {
 					alert.showAndWait();
 				}
 			} else {
+				fileServer.close();
 				client.disconnect();
 				isConnected = false;
 			}
