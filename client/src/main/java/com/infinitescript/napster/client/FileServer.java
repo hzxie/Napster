@@ -62,7 +62,9 @@ public class FileServer {
 				}
 			}
 		};
-		new Thread(commandListenerTask).start();
+		Thread commandListenerThread = new Thread(commandListenerTask);
+		commandListenerThread.setDaemon(true);
+		commandListenerThread.start();
 	}
 
 	private void sendDatagramPacket(DatagramSocket socket, byte[] outputDataBuffer, String ipAddress, int port)
@@ -196,7 +198,7 @@ public class FileServer {
 	/**
 	 * The buffer size of the file stream.
 	 */
-	private static final int BUFFER_SIZE = 1048576;
+	private static final int BUFFER_SIZE = 4096;
 
 	/**
 	 * The unique instance of Napster client.

@@ -46,7 +46,7 @@ public class FileReceiver {
 			String command = new String(inputPacket.getData());
 
 			LOGGER.debug("Receive command from peer: " + command);
-			if ( !command.equals("ACCEPT") ) {
+			if ( !command.startsWith("ACCEPT") ) {
 				throw new Exception("The sharer refused to send this file.");
 			}
 
@@ -106,7 +106,7 @@ public class FileReceiver {
 	/**
 	 * The buffer size of the file stream.
 	 */
-	private static final int BUFFER_SIZE = 1048576;
+	private static final int BUFFER_SIZE = 4096;
 
 	/**
 	 * The unique instance of FileReceiver.
