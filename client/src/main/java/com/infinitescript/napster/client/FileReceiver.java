@@ -42,7 +42,8 @@ public class FileReceiver {
 			commandOutputStream = new PrintWriter(commandSocket.getOutputStream(), true);
 
 			commandOutputStream.println("GET " + checksum);
-			if ( !commandInputStream.equals("ACCEPT") ) {
+			String command = commandInputStream.readLine();
+			if ( !command.equals("ACCEPT") ) {
 				throw new Exception("The sharer refused to send this file.");
 			}
 
