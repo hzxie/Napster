@@ -38,31 +38,23 @@ public class FileServer {
 					String command = new String(inputPacket.getData());
 					LOGGER.debug("Received new message: " + command);
 
-					outputDataBuffer = "ERROR".getBytes();
 					if ( command.startsWith("GET ") ) {
-						String checksum = command.substring(4);
-						InetAddress ipAddress = inputPacket.getAddress();
+						String checksum = command.substring(4, 36);
+						String ipAddress = inputPacket.getAddress().toString().substring(1);
 						int port = inputPacket.getPort();
 
-						LOGGER.debug(checksum);
-						LOGGER.debug(sharedFiles.containsKey(checksum));
 						if ( sharedFiles.containsKey(checksum) ) {
 							outputDataBuffer = "ACCEPT".getBytes();
-
-							try {
-								Thread.sleep(1000);
-							} catch ( InterruptedException e ) {
-								e.printStackTrace();
-							}
-							String ipAddressString = ipAddress.toString().substring(1);
-							sendFileStream(checksum, ipAddressString);
+							sendDatagramPacket(commandSocket, outputDataBuffer, ipAddress, port);
+							Thread.sleep(1000); // Wait for open socket for receiving files
+							sendFileStream(checksum, ipAddress);
+						} else {
+							outputDataBuffer = "ERROR".getBytes();
+							sendDatagramPacket(commandSocket, outputDataBuffer, ipAddress, port);
 						}
-
-						DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer, outputDataBuffer.length, ipAddress, port);
-						commandSocket.send(outputPacket);
 					}
 				}
-			} catch ( IOException ex ) {
+			} catch ( Exception ex ) {
 				LOGGER.catching(ex);
 			} finally {
 				if ( commandSocket != null ) {
@@ -71,6 +63,14 @@ public class FileServer {
 			}
 		};
 		new Thread(commandListenerTask).start();
+	}
+
+	private void sendDatagramPacket(DatagramSocket socket, byte[] outputDataBuffer, String ipAddress, int port)
+			throws IOException {
+		InetAddress inetAddress = InetAddress.getByName(ipAddress);
+
+		DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer, outputDataBuffer.length, inetAddress, port);
+		socket.send(outputPacket);
 	}
 
 	/**

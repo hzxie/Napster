@@ -36,9 +36,7 @@ public class FileReceiver {
 			// Send command for requesting files
 			commandSocket = new DatagramSocket();
 			byte[] inputDataBuffer = new byte[BUFFER_SIZE];
-			byte[] outputDataBuffer = new byte[BUFFER_SIZE];
-
-			outputDataBuffer = ("GET " + checksum).getBytes();
+			byte[] outputDataBuffer = ("GET " + checksum).getBytes();
 			DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer,
 					outputDataBuffer.length, InetAddress.getByName(ipAddress), COMMAND_PORT);
 			commandSocket.send(outputPacket);
