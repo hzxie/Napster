@@ -171,7 +171,6 @@ public class ApplicationBootstrap extends Application {
 					alert.showAndWait();
 				}
 			} else {
-				fileServer.close();
 				client.disconnect();
 				isConnected = false;
 			}
@@ -250,7 +249,7 @@ public class ApplicationBootstrap extends Application {
 						throw new Exception("The file is shared by yourself.");
 					}
 
-					String ipAddress = client.getFileSharerIp(checksum);
+					String ipAddress = client.getFileSharerIp(checksum).substring(1);
 					if ( !ipAddress.equals("N/a") ) {
 						LOGGER.debug("The IP of sharer: " + ipAddress);
 
