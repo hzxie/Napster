@@ -19,7 +19,7 @@ You can use following commands to build and run the Napster server:
 ```
 # Build Server
 cd server
-mvn package
+mvn package -DskipTests
 
 # Run Server
 java -jar target/napster.server.jar
@@ -30,7 +30,7 @@ Similar to Napster server, you can build and run Napster client as follows:
 ```
 # Build Client
 cd client
-mvn package
+mvn package -DskipTests
 
 # Run Client
 java -jar target/napster.client.jar
