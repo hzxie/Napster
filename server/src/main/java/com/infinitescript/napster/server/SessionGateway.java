@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,12 @@ public class SessionGateway extends Thread {
 					// The user is willing to leave
 					String nickName = users.get(socket);
 					LOGGER.info("User leaved " + nickName + ", Current Online Users: " + (users.size() - 1));
+
+					if ( !fileServer.unshareFiles(socket) ) {
+						LOGGER.warn("Failed to unshare files shared by " + socket);
+					}
 					users.remove(socket);
+
 					// Fix infinite loop after client exit
 					break;
 				} else if ( !users.containsKey(socket) ) {
@@ -61,17 +67,25 @@ public class SessionGateway extends Thread {
 					// Invoke FileServer for other request
 					if ( command.startsWith("ADD ") ) {
 						SharedFile sharedFile = JSON.parseObject(command.substring(4), SharedFile.class);
-						String ipAddress = socket.getInetAddress().toString();
-						boolean isFileShared = fileServer.shareNewFile(sharedFile, ipAddress);
+						boolean isFileShared = fileServer.shareNewFile(sharedFile, socket);
 
 						if ( isFileShared ) {
 							out.println("OK");
-							LOGGER.info("File shared at " + ipAddress + ", " + sharedFile);
+							LOGGER.info("File shared at " + socket + ", " + sharedFile);
 						} else {
 							out.println("ERROR");
 						}
 					} else if ( command.startsWith("DELETE ") ) {
+						Map<String, String> sharedFile = JSON.parseObject(command.substring(7), HashMap.class);
+						String checksum = sharedFile.get("checksum");
+						boolean isFileUnshared = fileServer.unshareFile(checksum, socket);
 
+						if ( isFileUnshared ) {
+							out.println("OK");
+							LOGGER.info("File unshared at " + socket + ", " + sharedFile);
+						} else {
+							out.println("ERROR");
+						}
 					} else if ( command.equals("LIST") ) {
 						List<SharedFile> sharedFiles = fileServer.getSharedFiles();
 						out.println(JSON.toJSONString(sharedFiles));

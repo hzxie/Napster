@@ -1,5 +1,9 @@
 package com.infinitescript.napster.server;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.net.Socket;
 import java.util.*;
 
 /**
@@ -15,8 +19,8 @@ public class FileServer {
 	}
 
 	/**
-	 *
-	 * @return
+	 * Get shared files.
+	 * @return a list contains shared files
 	 */
 	public List<SharedFile> getSharedFiles() {
 		List<SharedFile> sharedFileList = new ArrayList<>();
@@ -30,24 +34,85 @@ public class FileServer {
 	/**
 	 * Share a new file to Napster server.
 	 * @param sharedFile the file to share
-	 * @param ipAddress  the IP address of the sharer
+	 * @param socket     the socket of the sharer
 	 * @return whether the share operation is successful
 	 */
-	public boolean shareNewFile(SharedFile sharedFile, String ipAddress) {
+	public boolean shareNewFile(SharedFile sharedFile, Socket socket) {
 		String checksum = sharedFile.getChecksum();
 
 		if ( sharedFiles.containsKey(checksum) ) {
 			return false;
 		}
 
+		String ipAddress = socket.getInetAddress().toString();
+
 		Map<String, Object> meta = new HashMap<>();
 		meta.put("ipAddress", ipAddress);
+		meta.put("socket", socket);
 		meta.put("sharedFile", sharedFile);
 		sharedFiles.put(checksum, meta);
+
 		return true;
 	}
 
+	/**
+	 * Unshare a file.
+	 * @param checksum the checksum of the file
+	 * @param socket   the socket of the sharer
+	 * @return whether the unshare operation is successful
+	 */
+	public boolean unshareFile(String checksum, Socket socket) {
+		if ( socket == null || !sharedFiles.containsKey(checksum) ) {
+			return false;
+		}
+
+		Map<String, Object> sharedFileMeta = sharedFiles.get(checksum);
+		Socket s = (Socket) sharedFileMeta.get("socket");
+
+		if ( !socket.equals(s) ) {
+			return false;
+		}
+		sharedFiles.remove(checksum);
+		return true;
+	}
+
+	/**
+	 * Unshare all files shared by the user when this user log out.
+	 * @param socket the socket of the sharer
+	 * @return whether the unshare operation is successful
+	 */
+	public boolean unshareFiles(Socket socket) {
+		if ( socket == null ) {
+			return false;
+		}
+
+		Iterator<Map.Entry<String, Map<String, Object>>> itr = sharedFiles.entrySet().iterator();
+		while ( itr.hasNext() ) {
+			Map.Entry<String, Map<String, Object>> e = itr.next();
+			Socket s = (Socket) e.getValue().get("socket");
+
+			if ( socket.equals(s) ) {
+				itr.remove();
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * The list of shared files.
+	 *
+	 * The key stands for the checksum of a shared file.
+	 * The value is a HashMap which stores the meta data of the share file.
+	 */
 	private static final Map<String, Map<String, Object>> sharedFiles = new Hashtable<>();
 
+	/**
+	 * The unique instance of File server.
+	 */
 	private static final FileServer INSTANCE = new FileServer();
+
+	/**
+	 * Logger.
+	 */
+	private static final Logger LOGGER = LogManager.getLogger(FileServer.class);
 }

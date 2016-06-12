@@ -222,12 +222,12 @@ public class ApplicationBootstrap extends Application {
 
 				LOGGER.info("File unshared: " + selectedFile);
 			} else {
-				LOGGER.error("Failed to unshare a file for unknown reason.");
+				LOGGER.error("Failed to unshare a file, because you have no right to unshare this file.");
 
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setTitle("Share Failed");
 				alert.setHeaderText("Failed to unshare a file from Napster server.");
-				alert.setContentText("Error message: Unknown reason");
+				alert.setContentText("Error message: Permission deined.");
 				alert.showAndWait();
 			}
 		});
