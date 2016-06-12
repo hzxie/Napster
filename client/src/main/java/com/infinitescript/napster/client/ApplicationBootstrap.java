@@ -156,6 +156,7 @@ public class ApplicationBootstrap extends Application {
 				String nickName = nickNameTextField.getText();
 
 				try {
+					fileServer.accept();
 					client.connect(ipAddress, nickName);
 					fileTableView.setItems(getSharedFiles());
 
@@ -170,6 +171,7 @@ public class ApplicationBootstrap extends Application {
 					alert.showAndWait();
 				}
 			} else {
+				fileServer.close();
 				client.disconnect();
 				isConnected = false;
 			}
@@ -235,12 +237,13 @@ public class ApplicationBootstrap extends Application {
 			fileTableView.setItems(getSharedFiles());
 		});
 		receiveFileButton.setOnAction((ActionEvent e) -> {
+			receiveFileButton.setText("Please wait ...");
+			receiveFileButton.setDisable(true);
 			SharedFile selectedFile = fileTableView.getSelectionModel().getSelectedItem();
 			
 			File file = fileChooser.showSaveDialog(primaryStage);
 			if ( file != null ) {
 				String checksum = selectedFile.getChecksum();
-
 
 				try {
 					if ( fileServer.contains(checksum) ) {
@@ -251,6 +254,15 @@ public class ApplicationBootstrap extends Application {
 					if ( !ipAddress.equals("N/a") ) {
 						LOGGER.debug("The IP of sharer: " + ipAddress);
 
+						// Receive files and check if checksum is the same
+						fileReceiver.receiveFile(checksum, file.getAbsolutePath(), ipAddress);
+						String receivedChecksum = Files.hash(file, Hashing.md5()).toString();
+
+						if ( checksum.equals(receivedChecksum) ) {
+							LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+						} else {
+							throw new Exception("Checksum is not the same, please try again.");
+						}
 					} else {
 						throw new Exception("The file is no longer shared.");
 					}
@@ -264,6 +276,8 @@ public class ApplicationBootstrap extends Application {
 					alert.showAndWait();
 				}
 			}
+			receiveFileButton.setText("Receive Selected File");
+			receiveFileButton.setDisable(false);
 		});
 		fileTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if ( fileTableView.getSelectionModel().getSelectedItem() != null )  {
@@ -331,6 +345,11 @@ public class ApplicationBootstrap extends Application {
 	 * FileServer used for receiving commands for sending files.
 	 */
 	private static final FileServer fileServer = FileServer.getInstance();
+
+	/**
+	 * FileReceiver used for receiving file stream.
+	 */
+	private static final FileReceiver fileReceiver = FileReceiver.getInstance();
 
 	/**
 	 * A variable stores whether the client is connected to server.

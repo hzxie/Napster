@@ -26,7 +26,7 @@ public class FileServer {
 	 * @throws IOException
 	 */
 	public void accept() throws IOException {
-		ServerSocket commandListener = new ServerSocket(COMMAND_PORT);
+		commandListener = new ServerSocket(COMMAND_PORT);
 		Runnable commandListenerTask = () -> {
 			while ( true ) {
 				try {
@@ -63,6 +63,13 @@ public class FileServer {
 	}
 
 	/**
+	 * Stop receiving file stream.
+	 */
+	public void close() {
+		closeSocket(commandListener);
+	}
+
+	/**
 	 * Send file stream to the receiver.
 	 * @param checksum  the checksum of the file
 	 * @param ipAddress the IP address of the receiver
@@ -96,14 +103,14 @@ public class FileServer {
 		} finally {
 			// Close Socket and DataStream
 			try {
-				if ( socket != null ) {
-					socket.close();
-				}
 				if ( fileInputStream != null ) {
 					fileInputStream.close();
 				}
 				if ( fileOutputStream != null ) {
 					fileOutputStream.close();
+				}
+				if ( socket != null ) {
+					socket.close();
 				}
 			} catch ( IOException ex ) {
 				LOGGER.catching(ex);
@@ -157,14 +164,19 @@ public class FileServer {
 	 * The value stands for the absolute path of the file. 
 	 */
 	private static Map<String, String> sharedFiles = new Hashtable<>();
-	
+
+	/**
+	 * The server socket used for receiving commands.
+	 */
+	private ServerSocket commandListener;
+
 	/**
 	 * The port used for receiving commands.
 	 */
 	private static final int COMMAND_PORT = 7701;
 
 	/**
-	 * The port used for receiving file stream.
+	 * The port used for sending file stream.
 	 */
 	private static final int FILE_STREAM_PORT = 7702;
 
