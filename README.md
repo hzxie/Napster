@@ -4,7 +4,37 @@
 
 A simple file sharing computer program base on Java.
 
-This is the homework of *Practice of Software System Development* in Harbin Institute of Technology.
+This is the homework of *Practice of Software System Development* in [Harbin Institute of Technology](http://www.hit.edu.cn).
+
+## Setup
+
+> NOTE: Java 1.8.0 Update 42 or above is required.
+
+### Build server
+
+You can use following commands to build and run the Napster server:
+
+```
+# Build Server
+cd server
+mvn package
+
+# Run Server
+java -jar target/napster.server.jar
+```
+
+Similar to Napster server, you can build and run Napster client as follows:
+
+```
+# Build Client
+cd client
+mvn package
+
+# Run Client
+java -jar target/napster.client.jar
+```
+
+Enjoy!
 
 ## Screenshots
 
