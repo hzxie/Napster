@@ -1,6 +1,6 @@
 # Napster
 
-[![Build Status](https://travis-ci.com/zjhzxhz/Napster.svg?token=ngQSu6kYWuG5K9shK4PF)](https://travis-ci.com/zjhzxhz/Napster)
+[![Build Status](https://travis-ci.org/zjhzxhz/Napster.svg)](https://travis-ci.org/zjhzxhz/Napster)
 
 ## Introduction
 
