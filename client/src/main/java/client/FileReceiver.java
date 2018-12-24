@@ -5,19 +5,96 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.*;
+import javafx.concurrent.*;
 
 /**
  * File Receiver used for receiving file stream.
  *
  * 
  */
-public class FileReceiver {
+public class FileReceiver extends Task<Void> {
 	private FileReceiver() { }
 
 	public static FileReceiver getInstance() {
 		return INSTANCE;
 	}
 
+	public void initParams(String checksum, String filePath, String ipAddress) {
+		FileReceiver.checksum = checksum;
+		FileReceiver.filePath = filePath;
+		FileReceiver.ipAddress = ipAddress;
+	}
+	
+	@Override
+	protected Void call() throws Exception {
+		DatagramSocket commandSocket = null;
+		ServerSocket fileStreamListener = null;
+		Socket fileStreamSocket = null;
+		DataInputStream fileInputStream = null;
+		DataOutputStream fileOutputStream = null;
+
+		try {
+			// Send command for requesting files
+			commandSocket = new DatagramSocket();
+			byte[] inputDataBuffer = new byte[BUFFER_SIZE];
+			byte[] outputDataBuffer = ("GET " + checksum).getBytes();
+			DatagramPacket outputPacket = new DatagramPacket(outputDataBuffer,
+					outputDataBuffer.length, InetAddress.getByName(ipAddress), COMMAND_PORT);
+			commandSocket.send(outputPacket);
+
+			DatagramPacket inputPacket = new DatagramPacket(inputDataBuffer, inputDataBuffer.length);
+			commandSocket.receive(inputPacket);
+			String command = new String(inputPacket.getData());
+
+			LOGGER.debug("Receive command from peer: " + command);
+			if ( !command.startsWith("ACCEPT") ) {
+				throw new Exception("The sharer refused to send this file.");
+			}
+
+			// Opening port for receiving file stream
+			fileStreamListener = new ServerSocket(FILE_STREAM_PORT);
+			fileStreamSocket = fileStreamListener.accept();
+
+			// Receiving Data Stream
+			fileInputStream = new DataInputStream(new BufferedInputStream(fileStreamSocket.getInputStream()));
+			fileOutputStream = new DataOutputStream(new BufferedOutputStream(new BufferedOutputStream(new FileOutputStream(filePath))));
+			byte[] fileBuffer = new byte[BUFFER_SIZE];
+			while ( true ) {
+				if ( fileInputStream == null ) {
+					return null;
+				}
+				int bytesRead = fileInputStream.read(fileBuffer);
+
+				if ( bytesRead == -1 ) {
+					break;
+				}
+				fileOutputStream.write(fileBuffer, 0, bytesRead);
+			}
+			fileOutputStream.flush();
+		} finally {
+			try {
+				if ( commandSocket != null ) {
+					commandSocket.close();
+				}
+				if ( fileInputStream != null ) {
+					fileInputStream.close();
+				}
+				if ( fileOutputStream != null ) {
+					fileOutputStream.close();
+				}
+				if ( fileStreamSocket != null ) {
+					fileStreamSocket.close();
+				}
+				if ( fileStreamListener != null ) {
+					fileStreamListener.close();
+				}
+			} catch ( IOException ex ) {
+				LOGGER.catching(ex);
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Receive file stream.
 	 * @param checksum  the checksum of the file
@@ -117,4 +194,10 @@ public class FileReceiver {
 	 * Logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger(FileReceiver.class);
+
+	private static String checksum;
+	
+	private static String filePath;
+	
+	private static String ipAddress;
 }

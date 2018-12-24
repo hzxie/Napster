@@ -25,9 +25,11 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
+import javafx.concurrent.WorkerStateEvent;
 
 /**
  * The entrance of the application.
@@ -115,7 +117,7 @@ public class ApplicationBootstrap extends Application {
 		receiveFileButton.setMinWidth(160);
 		GridPane.setConstraints(receiveFileButton, 2, 5);
 		grid.getChildren().add(receiveFileButton);
-
+		
 		Label fileListLabel = new Label("Shared Files: ");
 		GridPane.setConstraints(fileListLabel, 0, 2);
 		grid.getChildren().add(fileListLabel);
@@ -246,7 +248,6 @@ public class ApplicationBootstrap extends Application {
 			if ( file != null ) {
 				String checksum = selectedFile.getChecksum();
 
-				try {
 //					if ( fileServer.contains(checksum) ) {
 //						throw new Exception("The file is shared by yourself.");
 //					}
@@ -256,29 +257,43 @@ public class ApplicationBootstrap extends Application {
 						LOGGER.debug("The IP of sharer: " + ipAddress);
 
 						// Receive files and check if checksum is the same
-						fileReceiver.receiveFile(checksum, file.getAbsolutePath(), ipAddress);
-						String receivedChecksum = Files.hash(file, Hashing.md5()).toString();
+						fileReceiver.initParams(checksum, file.getAbsolutePath(), ipAddress);
+						Thread downloading = new Thread(fileReceiver);
+						downloading.start();
+						fileReceiver.setOnSucceeded((WorkerStateEvent value) -> {
+							try {
+								String receivedChecksum = Files.hash(file, Hashing.md5()).toString();
+								if ( checksum.equals(receivedChecksum) ) {
+									LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+								} else {
+									throw new Exception("Checksum is not the same, please try again.");
+								}
+							} catch ( Exception ex ) {
+								LOGGER.catching(ex);
 
-						if ( checksum.equals(receivedChecksum) ) {
-							LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-						} else {
-							throw new Exception("Checksum is not the same, please try again.");
-						}
+								Alert alert = new Alert(AlertType.ERROR);
+								alert.setTitle("Receive File Failed");
+								alert.setHeaderText("Failed to receive a file from another sharer.");
+								alert.setContentText("Error message: " + ex.getMessage());
+								alert.showAndWait();
+							}
+							receiveFileButton.setText("Receive Selected File");
+							receiveFileButton.setDisable(false);
+						});
+
 					} else {
-						throw new Exception("The file is no longer shared.");
+						Alert alert = new Alert(AlertType.ERROR);
+						alert.setTitle("Receive File Failed");
+						alert.setHeaderText("Failed to receive a file from another sharer.");
+						alert.setContentText("Error message: File is no longer shared");
+						alert.showAndWait();
+						receiveFileButton.setText("Receive Selected File");
+						receiveFileButton.setDisable(false);
 					}
-				} catch ( Exception ex ) {
-					LOGGER.catching(ex);
-
-					Alert alert = new Alert(AlertType.ERROR);
-					alert.setTitle("Receive File Failed");
-					alert.setHeaderText("Failed to receive a file from another sharer.");
-					alert.setContentText("Error message: " + ex.getMessage());
-					alert.showAndWait();
-				}
+			} else {
+				receiveFileButton.setText("Receive Selected File");
+				receiveFileButton.setDisable(false);
 			}
-			receiveFileButton.setText("Receive Selected File");
-			receiveFileButton.setDisable(false);
 		});
 		fileTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if ( fileTableView.getSelectionModel().getSelectedItem() != null )  {
