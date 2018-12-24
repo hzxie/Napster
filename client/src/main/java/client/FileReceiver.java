@@ -1,4 +1,4 @@
-package com.infinitescript.napster.client;
+package client;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +9,7 @@ import java.net.*;
 /**
  * File Receiver used for receiving file stream.
  *
- * @author Haozhe Xie
+ * 
  */
 public class FileReceiver {
 	private FileReceiver() { }

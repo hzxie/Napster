@@ -1,4 +1,4 @@
-package com.infinitescript.napster.server;
+package server;
 
 import java.io.IOException;
 
@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * The entrance of the application.
  * 
- * @author Haozhe Xie
+ * 
  */
 public class ApplicationBootstrap {
 	public static void main(String[] args) {

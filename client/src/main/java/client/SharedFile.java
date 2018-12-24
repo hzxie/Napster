@@ -1,11 +1,11 @@
-package com.infinitescript.napster.server;
+package client;
 
 import java.io.Serializable;
 
 /**
  * The class is designed for storing information for shared files.
  * 
- * @author Haozhe Xie
+ * 
  */
 public class SharedFile implements Serializable {
 	/**

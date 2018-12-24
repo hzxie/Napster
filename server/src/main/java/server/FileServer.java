@@ -1,4 +1,4 @@
-package com.infinitescript.napster.server;
+package server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * File Server stored the list of shared files.
  *
- * @author Haozhe Xie
+ * 
  */
 public class FileServer {
 	private FileServer() { }

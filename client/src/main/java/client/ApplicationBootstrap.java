@@ -1,4 +1,4 @@
-package com.infinitescript.napster.client;
+package client;
 
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
@@ -32,7 +32,7 @@ import javafx.stage.FileChooser;
 /**
  * The entrance of the application.
  * 
- * @author Haozhe Xie
+ *
  */
 @SuppressWarnings("restriction")
 public class ApplicationBootstrap extends Application {
@@ -237,48 +237,53 @@ public class ApplicationBootstrap extends Application {
 			fileTableView.setItems(getSharedFiles());
 		});
 		receiveFileButton.setOnAction((ActionEvent e) -> {
-			receiveFileButton.setText("Please wait ...");
-			receiveFileButton.setDisable(true);
-			SharedFile selectedFile = fileTableView.getSelectionModel().getSelectedItem();
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					receiveFileButton.setText("Please wait ...");
+					receiveFileButton.setDisable(true);
+					SharedFile selectedFile = fileTableView.getSelectionModel().getSelectedItem();
 
-			fileChooser.setInitialFileName(selectedFile.getFileName());
-			File file = fileChooser.showSaveDialog(primaryStage);
-			if ( file != null ) {
-				String checksum = selectedFile.getChecksum();
+					fileChooser.setInitialFileName(selectedFile.getFileName());
+					File file = fileChooser.showSaveDialog(primaryStage);
+					if ( file != null ) {
+						String checksum = selectedFile.getChecksum();
 
-				try {
-					if ( fileServer.contains(checksum) ) {
-						throw new Exception("The file is shared by yourself.");
-					}
+						try {
+//							if ( fileServer.contains(checksum) ) {
+//								throw new Exception("The file is shared by yourself.");
+//							}
 
-					String ipAddress = client.getFileSharerIp(checksum).substring(1);
-					if ( !ipAddress.equals("N/a") ) {
-						LOGGER.debug("The IP of sharer: " + ipAddress);
+							String ipAddress = client.getFileSharerIp(checksum).substring(1);
+							if ( !ipAddress.equals("N/a") ) {
+								LOGGER.debug("The IP of sharer: " + ipAddress);
 
-						// Receive files and check if checksum is the same
-						fileReceiver.receiveFile(checksum, file.getAbsolutePath(), ipAddress);
-						String receivedChecksum = Files.hash(file, Hashing.md5()).toString();
+								// Receive files and check if checksum is the same
+								fileReceiver.receiveFile(checksum, file.getAbsolutePath(), ipAddress);
+								String receivedChecksum = Files.hash(file, Hashing.md5()).toString();
 
-						if ( checksum.equals(receivedChecksum) ) {
-							LOGGER.info("File successfully received to: " + file.getAbsolutePath());
-						} else {
-							throw new Exception("Checksum is not the same, please try again.");
+								if ( checksum.equals(receivedChecksum) ) {
+									LOGGER.info("File successfully received to: " + file.getAbsolutePath());
+								} else {
+									throw new Exception("Checksum is not the same, please try again.");
+								}
+							} else {
+								throw new Exception("The file is no longer shared.");
+							}
+						} catch ( Exception ex ) {
+							LOGGER.catching(ex);
+
+							Alert alert = new Alert(AlertType.ERROR);
+							alert.setTitle("Receive File Failed");
+							alert.setHeaderText("Failed to receive a file from another sharer.");
+							alert.setContentText("Error message: " + ex.getMessage());
+							alert.showAndWait();
 						}
-					} else {
-						throw new Exception("The file is no longer shared.");
 					}
-				} catch ( Exception ex ) {
-					LOGGER.catching(ex);
-
-					Alert alert = new Alert(AlertType.ERROR);
-					alert.setTitle("Receive File Failed");
-					alert.setHeaderText("Failed to receive a file from another sharer.");
-					alert.setContentText("Error message: " + ex.getMessage());
-					alert.showAndWait();
+					receiveFileButton.setText("Receive Selected File");
+					receiveFileButton.setDisable(false);
 				}
-			}
-			receiveFileButton.setText("Receive Selected File");
-			receiveFileButton.setDisable(false);
+			}).start();
 		});
 		fileTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if ( fileTableView.getSelectionModel().getSelectedItem() != null )  {

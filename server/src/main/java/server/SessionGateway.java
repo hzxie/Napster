@@ -1,4 +1,4 @@
-package com.infinitescript.napster.server;
+package server;
 
 import java.io.BufferedReader;
 import java.io.IOException;

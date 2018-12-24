@@ -1,4 +1,4 @@
-package com.infinitescript.napster.server;
+package server;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -6,7 +6,7 @@ import java.net.ServerSocket;
 /**
  * The socket listener for server.
  * 
- * @author Haozhe Xie
+ * 
  */
 public class SocketListener {
 	/**

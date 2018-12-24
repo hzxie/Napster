@@ -1,4 +1,4 @@
-package com.infinitescript.napster.client;
+package client;
 
 import java.io.*;
 import java.net.*;
@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * File server for sending shared files to others.
  *
- * @author Haozhe Xie
+ * 
  */
 public class FileServer {
 	private FileServer() { }
